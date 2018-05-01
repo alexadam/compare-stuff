@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import * as THREE from 'three';
+import THREE from './CustomThree';
 var OrbitControls = require('three-orbit-controls')(THREE)
+import * as ContentUtils from './content-gen'
 
 export default class View3D extends React.Component {
     constructor(props) {
@@ -88,21 +89,38 @@ export default class View3D extends React.Component {
         const marginX = 1
         const marginY = 1
 
-        this.objLeft = this.createCube(30);
+        // this.objLeft = this.createCube(30);
         this.objRight = this.createCube(10);
+
+        // this.objLeft = ContentUtils.genMoneyBrick(100)
+        // this.objLeft.position.set(0, 0, 0);
+        // this.scene.add(this.objLeft);
+
+        ContentUtils.makeMoneyBrick(100, (moneyMesh) => {
+            // this.objLeft = moneyMesh
+            // this.objLeft.position.set(0, 0, 0);
+            // this.scene.add(this.objLeft);
+
+            let mg = ContentUtils.makeMoneyPile(moneyMesh, 39)
+            this.objLeft = mg
+            this.objLeft.position.set(0, 0, 0);
+            this.scene.add(this.objLeft);
+
+            let bboxLeft = this.getBBox(this.objLeft)
+            let bboxRight = this.getBBox(this.objRight)
+
+            this.objLeft.position.set(-(marginX + bboxLeft.getSize().x), 0, marginY)
+            this.objRight.position.set(marginX + bboxRight.getSize().x, 0, marginY)
+
+            let sceneBBox = bboxLeft.union(bboxRight)
+            this.fitCameraToObject(this.camera, sceneBBox, 1.25, this.controls)
+
+            this.renderer.render(this.scene, this.camera);
+        })
 
         // TODO implement scale factor if sizes are huge
 
-        let bboxLeft = this.getBBox(this.objLeft)
-        let bboxRight = this.getBBox(this.objRight)
 
-        this.objLeft.position.set(-(marginX + bboxLeft.getSize().x), 0, marginY)
-        this.objRight.position.set(marginX + bboxRight.getSize().x, 0, marginY)
-
-        let sceneBBox = bboxLeft.union(bboxRight)
-        this.fitCameraToObject(this.camera, sceneBBox, 1.25, this.controls)
-
-        this.renderer.render(this.scene, this.camera);
     }
 
     createCube = (dim = 1) => {
